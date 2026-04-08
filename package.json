@@ -1,6 +1,6 @@
 {
   "name": "@automatalabs/react-native-transformers",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Use @huggingface/transformers in Expo and React Native apps through onnxruntime-react-native.",
   "license": "MIT",
   "author": "Automata Labs",
@@ -55,7 +55,7 @@
     "LICENSE"
   ],
   "peerDependencies": {
-    "@huggingface/transformers": "^4.0.0",
+    "@huggingface/transformers": "^4.0.1",
     "expo": "*",
     "expo-file-system": "*",
     "onnxruntime-react-native": ">=1.24.3 <2",
