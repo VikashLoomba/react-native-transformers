@@ -2,6 +2,8 @@
 
 Use [`@huggingface/transformers`](https://www.npmjs.com/package/@huggingface/transformers) in Expo / React Native apps through [`onnxruntime-react-native`](https://www.npmjs.com/package/onnxruntime-react-native), without forking Transformers.js.
 
+For npm release automation and trusted publisher setup, see [docs/npm-publishing.md](./docs/npm-publishing.md).
+
 ## What this package does
 
 - adds an Expo config plugin that composes `onnxruntime-react-native`
