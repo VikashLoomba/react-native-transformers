@@ -1,17 +1,51 @@
-const path = require('node:path');
+import * as path from 'node:path';
 
-function mergeUnique(existing = [], additions = []) {
+export type MetroAliases = Record<string, string>;
+
+export interface MetroResolutionContext {
+  resolveRequest(
+    context: MetroResolutionContext,
+    moduleName: string,
+    platform: string | null,
+  ): unknown;
+}
+
+export interface MetroResolverConfig {
+  assetExts?: readonly string[];
+  resolveRequest?: (
+    context: MetroResolutionContext,
+    moduleName: string,
+    platform: string | null,
+  ) => unknown;
+  [key: string]: unknown;
+}
+
+export interface MetroConfig {
+  resolver?: MetroResolverConfig;
+  watchFolders?: readonly string[];
+  [key: string]: unknown;
+}
+
+export interface WithTransformersReactNativeMetroOptions {
+  aliases?: MetroAliases;
+  watchFolders?: readonly string[];
+}
+
+function mergeUnique(existing: readonly string[] = [], additions: readonly string[] = []): string[] {
   return Array.from(new Set([...(existing ?? []), ...additions]));
 }
 
-function getTransformersReactNativeAliases(overrides = {}) {
+export function getTransformersReactNativeAliases(overrides: MetroAliases = {}): MetroAliases {
   const packageRoot = path.resolve(__dirname, '..');
   const adapterPath = path.join(packageRoot, 'src/adapter/onnxruntime-web-webgpu.js');
   const wrapperPath = path.join(packageRoot, 'src/transformers.js');
   const transformersNodeEntryPath = require.resolve('@huggingface/transformers', {
     paths: [process.cwd(), packageRoot],
   });
-  const transformersWebEntryPath = path.join(path.dirname(transformersNodeEntryPath), 'transformers.web.js');
+  const transformersWebEntryPath = path.join(
+    path.dirname(transformersNodeEntryPath),
+    'transformers.web.js',
+  );
   const onnxruntimePackagePath = require.resolve('onnxruntime-react-native/package.json', {
     paths: [process.cwd(), packageRoot],
   });
@@ -30,17 +64,20 @@ function getTransformersReactNativeAliases(overrides = {}) {
   };
 }
 
-function withTransformersReactNativeMetro(config, options = {}) {
+export function withTransformersReactNativeMetro(
+  config: MetroConfig,
+  options: WithTransformersReactNativeMetroOptions = {},
+): MetroConfig {
   const { aliases: aliasOverrides, watchFolders = [] } = options;
   const aliases = getTransformersReactNativeAliases(aliasOverrides);
-  const previousResolveRequest = config?.resolver?.resolveRequest;
+  const previousResolveRequest = config.resolver?.resolveRequest;
 
   return {
     ...config,
-    watchFolders: mergeUnique(config?.watchFolders, watchFolders),
+    watchFolders: mergeUnique(config.watchFolders, watchFolders),
     resolver: {
       ...config.resolver,
-      assetExts: mergeUnique(config?.resolver?.assetExts, ['onnx', 'ort']),
+      assetExts: mergeUnique(config.resolver?.assetExts, ['onnx', 'ort']),
       resolveRequest(context, moduleName, platform) {
         const alias =
           aliases[moduleName] ??
@@ -59,8 +96,3 @@ function withTransformersReactNativeMetro(config, options = {}) {
     },
   };
 }
-
-module.exports = {
-  getTransformersReactNativeAliases,
-  withTransformersReactNativeMetro,
-};

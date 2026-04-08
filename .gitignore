@@ -12,6 +12,8 @@ yarn-error.log*
 
 # package artifacts
 *.tgz
+dist/
+*.tsbuildinfo
 
 # environment files
 .env

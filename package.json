@@ -1,6 +1,6 @@
 {
   "name": "@automatalabs/react-native-transformers",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Use @huggingface/transformers in Expo and React Native apps through onnxruntime-react-native.",
   "license": "MIT",
   "author": "Automata Labs",
@@ -29,27 +29,57 @@
     "on-device-ai"
   ],
   "scripts": {
-    "check": "node --check app.plugin.js plugin/src/index.js src/index.js src/runtime.js src/expoFileSystemCache.js src/metro.js src/transformers.js src/adapter/onnxruntime-web-webgpu.js scripts/sync-transformers-peer.mjs",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint app.plugin.js app.plugin.ts eslint.config.mjs plugin src scripts types",
+    "check": "npm run check:transformers-peer && npm run lint && npm run typecheck && npm run build",
     "check:transformers-peer": "node ./scripts/sync-transformers-peer.mjs",
     "sync:transformers-peer": "node ./scripts/sync-transformers-peer.mjs --write",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
     "prepublishOnly": "npm run check",
     "example": "npm --prefix example run start",
     "example:ios": "npm --prefix example run ios"
   },
-  "main": "./src/index.js",
-  "react-native": "./src/index.js",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "react-native": "./dist/src/index.js",
   "exports": {
-    ".": "./src/index.js",
-    "./metro": "./src/metro.js",
-    "./plugin": "./plugin/src/index.js",
-    "./transformers": "./src/transformers.js",
-    "./adapter/onnxruntime-web-webgpu": "./src/adapter/onnxruntime-web-webgpu.js",
-    "./app.plugin": "./app.plugin.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "require": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    },
+    "./metro": {
+      "types": "./dist/src/metro.d.ts",
+      "require": "./dist/src/metro.js",
+      "default": "./dist/src/metro.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin/src/index.d.ts",
+      "require": "./dist/plugin/src/index.js",
+      "default": "./dist/plugin/src/index.js"
+    },
+    "./transformers": {
+      "types": "./dist/src/transformers.d.ts",
+      "require": "./dist/src/transformers.js",
+      "default": "./dist/src/transformers.js"
+    },
+    "./adapter/onnxruntime-web-webgpu": {
+      "types": "./dist/src/adapter/onnxruntime-web-webgpu.d.ts",
+      "require": "./dist/src/adapter/onnxruntime-web-webgpu.js",
+      "default": "./dist/src/adapter/onnxruntime-web-webgpu.js"
+    },
+    "./app.plugin": {
+      "types": "./dist/app.plugin.d.ts",
+      "require": "./dist/app.plugin.js",
+      "default": "./dist/app.plugin.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "plugin",
-    "src",
+    "dist",
     "app.plugin.js",
     "README.md",
     "LICENSE"
@@ -70,5 +100,19 @@
       "optional": true
     }
   },
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@huggingface/transformers": "^4.0.1",
+    "@types/node": "^25.5.2",
+    "@types/react": "^19.2.14",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
+    "@typescript-eslint/parser": "^8.58.1",
+    "eslint": "^10.2.0",
+    "globals": "^17.4.0",
+    "onnxruntime-react-native": "^1.24.3",
+    "react": "^19.2.5",
+    "react-native": "^0.85.0",
+    "typescript": "^6.0.2"
+  }
 }

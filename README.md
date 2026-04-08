@@ -305,7 +305,7 @@ But you generally cannot prove exact per-op fallback from JavaScript alone.
 
 This package takes a no-fork approach:
 
-- aliases `@huggingface/transformers` to `src/transformers.js`
+- aliases `@huggingface/transformers` to the TypeScript-authored wrapper in `src/transformers.ts`
 - aliases `onnxruntime-node`, `onnxruntime-web`, and `onnxruntime-web/webgpu` to a React Native adapter
 - reuses the unified ONNX Runtime JavaScript API shape exposed by `onnxruntime-react-native`
 - patches the create-session path for React Native buffer / external-data model loading
