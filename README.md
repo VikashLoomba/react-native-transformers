@@ -21,7 +21,7 @@ import { pipeline, AutoTokenizer, AutoModelForSequenceClassification } from '@hu
 ## Requirements
 
 - Node `>= 18`
-- `@huggingface/transformers` `^4`
+- `@huggingface/transformers` matching this package's current peer dependency range
 - `onnxruntime-react-native` `>= 1.24.3 < 2`
 - `react`
 - `react-native`

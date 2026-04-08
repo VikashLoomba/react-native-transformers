@@ -4,14 +4,26 @@ on:
   push:
     tags:
       - 'v*'
+  schedule:
+    - cron: '23 6 * * *'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Release mode
+        required: true
+        default: publish
+        type: choice
+        options:
+          - publish
+          - track-transformers
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref_name || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   publish:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -48,3 +60,132 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --access public
+
+  track-transformers:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'track-transformers')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check upstream Transformers.js version
+        id: sync
+        run: node ./scripts/sync-transformers-peer.mjs
+
+      - name: Check whether current package version is already published
+        id: current_package
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            PUBLISHED=true
+          else
+            PUBLISHED=false
+          fi
+
+          echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "published=$PUBLISHED" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether current release tag exists on origin
+        id: current_tag
+        run: |
+          TAG="v${{ steps.current_package.outputs.version }}"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Nothing to release
+        if: steps.sync.outputs.changed != 'true' && steps.current_package.outputs.published == 'true' && steps.current_tag.outputs.exists == 'true'
+        run: |
+          echo "Peer dependency already tracks @huggingface/transformers ${{ steps.sync.outputs.latest_version }}."
+          echo "Package version ${{ steps.current_package.outputs.version }} is already published and tagged."
+
+      - name: Configure git author
+        if: steps.sync.outputs.changed == 'true' || steps.current_tag.outputs.exists != 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Sync Transformers.js peer dependency
+        if: steps.sync.outputs.changed == 'true'
+        run: node ./scripts/sync-transformers-peer.mjs --write
+
+      - name: Bump package version
+        if: steps.sync.outputs.changed == 'true'
+        run: npm version patch --no-git-tag-version
+
+      - name: Refresh lockfiles
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          npm install --package-lock-only
+          npm --prefix example install --package-lock-only
+
+      - name: Validate package sources
+        if: steps.sync.outputs.changed == 'true' || steps.current_package.outputs.published != 'true'
+        run: |
+          npm run check
+          npm pack --dry-run
+
+      - name: Capture release version
+        if: steps.sync.outputs.changed == 'true' || steps.current_package.outputs.published != 'true' || steps.current_tag.outputs.exists != 'true'
+        id: release
+        run: |
+          echo "package_name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Commit release changes
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git add package.json package-lock.json example/package.json example/package-lock.json
+          git commit -m "chore: track @huggingface/transformers ${{ steps.sync.outputs.latest_version }}"
+
+      - name: Push release commit
+        if: steps.sync.outputs.changed == 'true'
+        run: git push origin HEAD:${GITHUB_REF_NAME}
+
+      - name: Check whether release version is already published
+        if: steps.sync.outputs.changed == 'true' || steps.current_package.outputs.published != 'true'
+        id: release_published
+        run: |
+          if npm view "${{ steps.release.outputs.package_name }}@${{ steps.release.outputs.version }}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: (steps.sync.outputs.changed == 'true' || steps.current_package.outputs.published != 'true') && steps.release_published.outputs.published != 'true'
+        run: npm publish --access public
+
+      - name: Ensure release tag exists on origin
+        if: steps.sync.outputs.changed == 'true' || steps.current_package.outputs.published != 'true' || steps.current_tag.outputs.exists != 'true'
+        run: |
+          TAG="v${{ steps.release.outputs.version }}"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "${TAG} already exists on origin."
+            exit 0
+          fi
+
+          git tag "$TAG"
+          git push origin "$TAG"
