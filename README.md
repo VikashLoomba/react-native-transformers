@@ -1,5 +1,7 @@
 # @automatalabs/react-native-transformers
 
+[![npm version](https://img.shields.io/npm/v/%40automatalabs%2Freact-native-transformers)](https://www.npmjs.com/package/@automatalabs/react-native-transformers)
+
 Use [`@huggingface/transformers`](https://www.npmjs.com/package/@huggingface/transformers) in Expo / React Native apps through [`onnxruntime-react-native`](https://www.npmjs.com/package/onnxruntime-react-native), without forking Transformers.js.
 
 For npm release automation and trusted publisher setup, see [docs/npm-publishing.md](./docs/npm-publishing.md).
