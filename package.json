@@ -1,0 +1,72 @@
+{
+  "name": "@automatalabs/react-native-transformers",
+  "version": "0.1.0",
+  "description": "Use @huggingface/transformers in Expo and React Native apps through onnxruntime-react-native.",
+  "license": "MIT",
+  "author": "Automata Labs",
+  "homepage": "https://github.com/VikashLoomba/react-native-transformers#readme",
+  "bugs": {
+    "url": "https://github.com/VikashLoomba/react-native-transformers/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VikashLoomba/react-native-transformers.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "expo",
+    "react-native",
+    "huggingface",
+    "transformers",
+    "onnxruntime",
+    "onnxruntime-react-native",
+    "mobile-ai",
+    "on-device-ai"
+  ],
+  "scripts": {
+    "check": "node --check app.plugin.js plugin/src/index.js src/index.js src/runtime.js src/expoFileSystemCache.js src/metro.js src/transformers.js src/adapter/onnxruntime-web-webgpu.js",
+    "prepublishOnly": "npm run check",
+    "example": "npm --prefix example run start",
+    "example:ios": "npm --prefix example run ios"
+  },
+  "main": "./src/index.js",
+  "react-native": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./metro": "./src/metro.js",
+    "./plugin": "./plugin/src/index.js",
+    "./transformers": "./src/transformers.js",
+    "./adapter/onnxruntime-web-webgpu": "./src/adapter/onnxruntime-web-webgpu.js",
+    "./app.plugin": "./app.plugin.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "plugin",
+    "src",
+    "app.plugin.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@huggingface/transformers": "^4.0.0",
+    "expo": "*",
+    "expo-file-system": "*",
+    "onnxruntime-react-native": ">=1.24.3 <2",
+    "react": "*",
+    "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    },
+    "expo-file-system": {
+      "optional": true
+    }
+  },
+  "dependencies": {}
+}

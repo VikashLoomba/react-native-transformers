@@ -1,0 +1,30 @@
+{
+  "name": "transformers-js-react-native-example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "ios:native": "expo run:ios",
+    "prebuild": "expo prebuild",
+    "prebuild:clean": "expo prebuild --clean",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.0.0",
+    "expo": "~54.0.33",
+    "expo-dev-client": "~6.0.20",
+    "expo-file-system": "~19.0.21",
+    "expo-status-bar": "~3.0.9",
+    "onnxruntime-react-native": "^1.24.3",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-audio-api": "^0.11.7",
+    "@automatalabs/react-native-transformers": "file:.."
+  },
+  "private": true,
+  "devDependencies": {
+    "babel-preset-expo": "~54.0.10"
+  }
+}
