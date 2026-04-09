@@ -1,6 +1,6 @@
 {
   "name": "@automatalabs/react-native-transformers",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Use @huggingface/transformers in Expo and React Native apps through onnxruntime-react-native.",
   "license": "MIT",
   "author": "Automata Labs",
@@ -76,6 +76,7 @@
       "require": "./dist/app.plugin.js",
       "default": "./dist/app.plugin.js"
     },
+    "./app.plugin.js": "./app.plugin.js",
     "./package.json": "./package.json"
   },
   "files": [
