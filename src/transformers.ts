@@ -292,6 +292,38 @@ function wrapModelRegistry(modelRegistry: unknown): void {
   wrapOptionsMethod(modelRegistry as PatchableTarget, 'clear_pipeline_cache', 2);
 }
 
+function cloneTransformersModule(
+  transformers: PatchableTransformersModule,
+): PatchableTransformersModule {
+  const mutableTransformers = Object.create(
+    Object.getPrototypeOf(transformers) as object | null,
+  ) as PatchableTransformersModule;
+
+  for (const key of Reflect.ownKeys(transformers)) {
+    const descriptor = Object.getOwnPropertyDescriptor(transformers, key);
+
+    if (!descriptor) {
+      continue;
+    }
+
+    const value: unknown =
+      'value' in descriptor
+        ? descriptor.value
+        : descriptor.get
+          ? descriptor.get.call(transformers)
+          : undefined;
+
+    Object.defineProperty(mutableTransformers, key, {
+      configurable: true,
+      enumerable: descriptor.enumerable ?? true,
+      writable: true,
+      value,
+    });
+  }
+
+  return mutableTransformers;
+}
+
 function patchTransformersReactNative(
   transformers: PatchableTransformersModule,
   options: PatchTransformersReactNativeOptions = {},
@@ -304,21 +336,23 @@ function patchTransformersReactNative(
     return transformers as PatchedTransformersModule;
   }
 
+  const mutableTransformers = cloneTransformersModule(transformers);
+
   installTransformersReactNativeGlobals(options.globals);
-  configureTransformersEnvironment(transformers, options.environment);
-  ensureTransformersFetch(transformers);
+  configureTransformersEnvironment(mutableTransformers, options.environment);
+  ensureTransformersFetch(mutableTransformers);
 
-  if (typeof transformers.pipeline === 'function') {
-    transformers.pipeline = wrapPipeline(transformers, transformers.pipeline);
+  if (typeof mutableTransformers.pipeline === 'function') {
+    mutableTransformers.pipeline = wrapPipeline(mutableTransformers, mutableTransformers.pipeline);
   }
 
-  for (const value of Object.values(transformers)) {
-    wrapFromPretrained(value, transformers);
+  for (const value of Object.values(mutableTransformers)) {
+    wrapFromPretrained(value, mutableTransformers);
   }
 
-  wrapModelRegistry(transformers.ModelRegistry);
+  wrapModelRegistry(mutableTransformers.ModelRegistry);
 
-  Object.assign(transformers, {
+  Object.assign(mutableTransformers, {
     configureTransformersEnvironment,
     ensureTransformersFetch,
     installTransformersReactNativeGlobals,
@@ -327,14 +361,14 @@ function patchTransformersReactNative(
     rawTransformers: transformers,
   });
 
-  Object.defineProperty(transformers, TRANSFORMERS_REACT_NATIVE_PATCHED, {
+  Object.defineProperty(mutableTransformers, TRANSFORMERS_REACT_NATIVE_PATCHED, {
     configurable: false,
     enumerable: false,
     writable: false,
     value: true,
   });
 
-  return transformers as PatchedTransformersModule;
+  return mutableTransformers as PatchedTransformersModule;
 }
 
 installTransformersReactNativeGlobals();
